@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Slideshow with Music</title>
+  <!-- Подключаем A-Frame и MindAR -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
+  <script>
+    AFRAME.registerComponent('ar-slideshow', {
+      init: function () {
+        const el = this.el;
+        
+        // Список картинок для слайд-шоу
+        const images = [
+          '#img1',
+          '#img2',
+          '#img3'
+        ];
+        
+        let currentIndex = 0;
+        let intervalId = null;
+        const audio = document.querySelector('#bg-music');
+
+        // Событие: маркер найден в камере
+        el.addEventListener("targetFound", () => {
+          // Запускаем музыку
+          audio.play().catch(e => console.log("Автовоспроизведение заблокировано браузером", e));
+
+          // Запускаем смену картинок каждые 2.5 секунды
+          intervalId = setInterval(() => {
+            currentIndex = (currentIndex + 1) % images.length;
+            el.setAttribute('src', images[currentIndex]);
+          }, 2500);
+        });
+
+        // Событие: маркер потерян из вида
+        el.addEventListener("targetLost", () => {
+          // Ставим музыку на паузу и останавливаем таймер
+          audio.pause();
+          clearInterval(intervalId);
+        });
+      }
+    });
+  </script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+    
+    <a-assets>
+      <!-- Ваши картинки -->
+      <img id="img1" src="photo1.jpg">
+      <img id="img2" src="photo2.jpg">
+      <img id="img3" src="photo3.jpg">
+
+      <!-- Ваша аудиозапись -->
+      <audio id="bg-music" src="music.mp3" preload="auto"></audio>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Привязка к маркеру targetIndex: 0 -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <!-- Плоскость, на которой листаются картинки -->
+      <a-plane 
+        src="#img1" 
+        position="0 0 0" 
+        height="1" 
+        width="1" 
+        rotation="0 0 0" 
+        ar-slideshow>
+      </a-plane>
+    </a-entity>
+  </a-scene>
+
+</body>
+</html>
