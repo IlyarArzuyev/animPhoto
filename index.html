@@ -1,15 +1,36 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title></title>
+  <!-- Запрет масштабирования (щипка пальцами) и стандартных жестов -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ильяр & Монкё ❤️ 1 Год</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- A-Frame и MindAR -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  
+  <!-- Библиотека для сканирования QR-кодов -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
-    /* Стиль заставки MindAR: перекрываем голубой фон матовым стеклом */
+    /* Блокировка скролла, зума и свайпов для Telegram Mini App */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: manipulation; /* Блокирует зум жест щипка */
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background-color: #000000;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Стили заставки MindAR */
     .mindar-ui-overlay,
     .mindar-ui-loading {
       background: rgba(0, 0, 0, 0.4) !important;
@@ -17,27 +38,45 @@
       -webkit-backdrop-filter: blur(20px) !important;
     }
 
-    /* Кастомизация индикатора загрузки MindAR */
     .mindar-ui-loading .loader {
       border: 3px solid rgba(255, 255, 255, 0.2) !important;
       border-top-color: #ffffff !important;
     }
 
-    /* Кнопка первого клика (старт) */
-    #start-btn {
+    /* Главное меню выбора */
+    #main-menu {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 99999;
-      padding: 16px 32px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #ffffff;
-      
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+    }
 
-      background: rgba(0, 0, 0, 0.35);
+    .menu-title {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .menu-btn {
+      width: 240px;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      background: rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -46,14 +85,18 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       transition: all 0.3s ease;
       -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
-    #start-btn:active {
-      transform: translate(-50%, -50%) scale(0.95);
-      background: rgba(0, 0, 0, 0.5);
+    .menu-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    /* Кнопка перехода на внешний сайт */
+    /* Кнопка перехода на внешний сайт (в AR-режиме) */
     #link-btn {
       display: none;
       position: absolute;
@@ -61,29 +104,22 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 99999;
-      
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      
       padding: 14px 28px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 15px;
       font-weight: 600;
-      letter-spacing: 0.3px;
       color: #ffffff;
       text-decoration: none;
       white-space: nowrap;
-
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-
       background: rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 50px;
-      
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       -webkit-tap-highlight-color: transparent;
@@ -92,7 +128,6 @@
     #link-btn:active {
       transform: translateX(-50%) scale(0.95);
       background: rgba(0, 0, 0, 0.5);
-      border-color: rgba(255, 255, 255, 0.5);
     }
 
     #link-btn svg {
@@ -105,27 +140,44 @@
       stroke-linejoin: round;
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
     }
+
+    /* Окно сканера QR */
+    #qr-reader-container {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 99998;
+      background: #000;
+    }
+
+    #qr-reader {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 
   <script>
+    // Инициализация Telegram WebApp API
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand(); // Разворачиваем на весь экран
+      if (window.Telegram.WebApp.disableVerticalSwipes) {
+        window.Telegram.WebApp.disableVerticalSwipes(); // Отключаем свайп вниз в Telegram
+      }
+    }
+
+    // Запрет скролла и тяги экрана вниз (bounce effect)
+    document.addEventListener('touchmove', function (event) {
+      if (event.scale !== 1) { event.preventDefault(); } // Блокировка щипка
+    }, { passive: false });
+
     AFRAME.registerComponent('ar-video-handler', {
       init: function () {
         const el = this.el;
         const video = document.querySelector('#ar-video');
-        const startBtn = document.getElementById('start-btn');
-        const linkBtn = document.getElementById('link-btn');
-
-        startBtn.addEventListener('click', () => {
-          video.play().then(() => {
-            video.pause();
-            startBtn.style.display = 'none';
-            linkBtn.style.display = 'inline-flex';
-          }).catch(err => {
-            console.error("Ошибка при разблокировке медиа:", err);
-            startBtn.style.display = 'none';
-            linkBtn.style.display = 'inline-flex';
-          });
-        });
 
         el.addEventListener("targetFound", () => {
           video.muted = false;
@@ -140,12 +192,50 @@
         });
       }
     });
+
+    // Функция запуска AR режимов
+    function startAR() {
+      document.getElementById('main-menu').style.display = 'none';
+      document.getElementById('link-btn').style.display = 'inline-flex';
+      
+      const video = document.querySelector('#ar-video');
+      video.play().then(() => {
+        video.pause();
+      }).catch(err => console.error(err));
+    }
+
+    // Функция запуска QR сканера
+    function startQRScanner() {
+      document.getElementById('main-menu').style.display = 'none';
+      document.getElementById('qr-reader-container').style.display = 'block';
+
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+            html5QrCode.stop();
+            window.location.href = decodedText;
+          }
+        },
+        (errorMessage) => { /* сканирование... */ }
+      ).catch(err => console.error(err));
+    }
   </script>
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-  <!-- Кнопка запуска -->
-  <button id="start-btn">Нажмите, чтобы начать</button>
+  <!-- Главное меню выборов -->
+  <div id="main-menu">
+    <div class="menu-title">Выберите режим</div>
+    <button class="menu-btn" onclick="startAR()">
+      <span>📹 AR-Видео</span>
+    </button>
+    <button class="menu-btn" onclick="startQRScanner()">
+      <span>📷 QR-Сканер</span>
+    </button>
+  </div>
 
   <!-- Кнопка перехода на сайт -->
   <a id="link-btn" href="https://google.com" target="_blank">
@@ -156,6 +246,11 @@
       <line x1="10" y1="14" x2="21" y2="3"></line>
     </svg>
   </a>
+
+  <!-- Контейнер для сканера QR -->
+  <div id="qr-reader-container">
+    <div id="qr-reader"></div>
+  </div>
   
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
