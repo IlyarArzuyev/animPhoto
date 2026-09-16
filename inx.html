@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+
+  <!-- A-Frame и MindAR -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    /* Стиль заставки MindAR: перекрываем голубой фон матовым стеклом */
+    .mindar-ui-overlay,
+    .mindar-ui-loading {
+      background: rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+    }
+
+    /* Кастомизация индикатора загрузки MindAR */
+    .mindar-ui-loading .loader {
+      border: 3px solid rgba(255, 255, 255, 0.2) !important;
+      border-top-color: #ffffff !important;
+    }
+
+    /* Кнопка первого клика (старт) */
+    #start-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 99999;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-btn:active {
+      transform: translate(-50%, -50%) scale(0.95);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Кнопка перехода на внешний сайт */
+    #link-btn {
+      display: none;
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      
+      padding: 14px 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #ffffff;
+      text-decoration: none;
+      white-space: nowrap;
+
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50px;
+      
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #link-btn:active {
+      transform: translateX(-50%) scale(0.95);
+      background: rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #link-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+    }
+  </style>
+
+  <script>
+    AFRAME.registerComponent('ar-video-handler', {
+      init: function () {
+        const el = this.el;
+        const video = document.querySelector('#ar-video');
+        const startBtn = document.getElementById('start-btn');
+        const linkBtn = document.getElementById('link-btn');
+
+        startBtn.addEventListener('click', () => {
+          video.play().then(() => {
+            video.pause();
+            startBtn.style.display = 'none';
+            linkBtn.style.display = 'inline-flex';
+          }).catch(err => {
+            console.error("Ошибка при разблокировке медиа:", err);
+            startBtn.style.display = 'none';
+            linkBtn.style.display = 'inline-flex';
+          });
+        });
+
+        el.addEventListener("targetFound", () => {
+          video.muted = false;
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => console.log("Play error:", error));
+          }
+        });
+
+        el.addEventListener("targetLost", () => {
+          video.pause();
+        });
+      }
+    });
+  </script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+
+  <!-- Кнопка запуска -->
+  <button id="start-btn">Нажмите, чтобы начать</button>
+
+  <!-- Кнопка перехода на сайт -->
+  <a id="link-btn" href="https://google.com" target="_blank">
+    <span>Перейти на сайт</span>
+    <svg viewBox="0 0 24 24">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <line x1="10" y1="14" x2="21" y2="3"></line>
+    </svg>
+  </a>
+  
+  <a-scene 
+    mindar-image="imageTargetSrc: ./targets.mind;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights: false" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
+    
+    <a-assets>
+      <video 
+        id="ar-video" 
+        src="video.mp4" 
+        preload="auto" 
+        loop="true" 
+        crossorigin="anonymous" 
+        playsinline 
+        webkit-playsinline
+        muted>
+      </video>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0" ar-video-handler>
+      <a-video 
+        src="#ar-video" 
+        position="0 -0.1 0.01" 
+        width="1.0" 
+        height="1.3" 
+        rotation="0 0 0"
+        material="shader: flat; src: #ar-video;">
+      </a-video>
+    </a-entity>
+  </a-scene>
+
+</body>
+</html>
