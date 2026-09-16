@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
+    /* Кнопка первого клика (старт) */
     #start-btn {
       position: absolute;
       top: 50%;
@@ -24,6 +25,56 @@
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
+
+    /* Кнопка перехода на внешний сайт (Glassmorphism) */
+    #link-btn {
+      display: none; /* Скрываем до нажатия кнопки "Начать" */
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      
+      padding: 14px 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #ffffff;
+      text-decoration: none;
+      white-space: nowrap;
+
+      background: rgba(20, 20, 20, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 50px;
+      
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #link-btn:active {
+      transform: translateX(-50%) scale(0.95);
+      background: rgba(20, 20, 20, 0.85);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    #link-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
   </style>
 
   <script>
@@ -32,21 +83,24 @@
         const el = this.el;
         const video = document.querySelector('#ar-video');
         const startBtn = document.getElementById('start-btn');
+        const linkBtn = document.getElementById('link-btn');
 
-        // Клик по кнопке разблокирует автовоспроизведение в мобильных браузерах
+        // Клик по кнопке "Начать" снимает защиту от автовоспроизведения
         startBtn.addEventListener('click', () => {
           video.play().then(() => {
             video.pause();
             startBtn.style.display = 'none';
+            linkBtn.style.display = 'inline-flex';
           }).catch(err => {
             console.error("Ошибка при разблокировке медиа:", err);
             startBtn.style.display = 'none';
+            linkBtn.style.display = 'inline-flex';
           });
         });
 
         // Событие: маркер найден в камере
         el.addEventListener("targetFound", () => {
-          video.muted = false; // Включаем звук
+          video.muted = false;
           const playPromise = video.play();
           if (playPromise !== undefined) {
             playPromise.catch(error => console.log("Play error:", error));
@@ -63,8 +117,19 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
 
+  <!-- Стартовая кнопка -->
   <button id="start-btn">Нажмите, чтобы начать</button>
 
+  <!-- Кнопка перехода на сайт -->
+  <a id="link-btn" href="https://google.com" target="_blank">
+    <span>Перейти на сайт</span>
+    <svg viewBox="0 0 24 24">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <line x1="10" y1="14" x2="21" y2="3"></line>
+    </svg>
+  </a>
+  
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
@@ -73,7 +138,6 @@
     device-orientation-permission-ui="enabled: false">
     
     <a-assets>
-      <!-- Добавлены критически важные атрибуты для воспроизведения текстуры -->
       <video 
         id="ar-video" 
         src="video.mp4" 
@@ -89,15 +153,14 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" ar-video-handler>
-      <!-- Шейдер flat предотвращает почернение материала при отсутствии света -->
-    <a-video 
-  src="#ar-video" 
-  position="0 0.00 0.01" 
-  width="1.0" 
-  height="1.3" 
-  rotation="0 0 0"
-  material="shader: flat; src: #ar-video;">
-</a-video>
+      <a-video 
+        src="#ar-video" 
+        position="0 0.00 0.01" 
+        width="1.0" 
+        height="1.3" 
+        rotation="0 0 0"
+        material="shader: flat; src: #ar-video;">
+      </a-video>
     </a-entity>
   </a-scene>
 
