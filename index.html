@@ -2,14 +2,27 @@
 <html lang="ru">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Заголовок страницы вместо стандартного AR Experience -->
-  <title>Ильяр & Монкё ❤️ 1 Год</title>
+  <title>Ильяр & Жибек ❤️ 1 Год</title>
 
   <!-- A-Frame и MindAR -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
+    /* Стиль заставки MindAR: перекрываем голубой фон матовым стеклом */
+    .mindar-ui-overlay,
+    .mindar-ui-loading {
+      background: rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+    }
+
+    /* Кастомизация индикатора загрузки MindAR */
+    .mindar-ui-loading .loader {
+      border: 3px solid rgba(255, 255, 255, 0.2) !important;
+      border-top-color: #ffffff !important;
+    }
+
     /* Кнопка первого клика (старт) */
     #start-btn {
       position: absolute;
@@ -169,7 +182,7 @@
     <a-entity mindar-image-target="targetIndex: 0" ar-video-handler>
       <a-video 
         src="#ar-video" 
-        position="0 -0.2 0.01" 
+        position="0 -0.1 0.01" 
         width="1.0" 
         height="1.3" 
         rotation="0 0 0"
