@@ -2,44 +2,63 @@
 <html lang="ru">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Slideshow with Music</title>
-  <!-- Подключаем A-Frame и MindAR -->
+  <title>AR Video Experience</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
+  <style>
+    /* Кнопка запуска для снятия защиты от автовоспроизведения */
+    #start-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 99999;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: #007bff;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+  </style>
+
   <script>
-    AFRAME.registerComponent('ar-slideshow', {
+    let videoAllowed = false;
+
+    // Функция разблокировки видео и звука при клике
+    function startExperience() {
+      const video = document.querySelector('#ar-video');
+      
+      // Краткий запуск для активации контекста на iOS/Android
+      video.play().then(() => {
+        video.pause();
+        video.currentTime = 0;
+        videoAllowed = true;
+      }).catch(e => console.log("Ошибка воспроизведения:", e));
+
+      // Скрываем кнопку
+      document.getElementById('start-btn').style.display = 'none';
+    }
+
+    AFRAME.registerComponent('ar-video-handler', {
       init: function () {
         const el = this.el;
-        
-        // Список картинок для слайд-шоу
-        const images = [
-          '#img1',
-          '#img2',
-          '#img3'
-        ];
-        
-        let currentIndex = 0;
-        let intervalId = null;
-        const audio = document.querySelector('#bg-music');
+        const video = document.querySelector('#ar-video');
 
-        // Событие: маркер найден в камере
+        // Когда камера находит фото-маркер
         el.addEventListener("targetFound", () => {
-          // Запускаем музыку
-          audio.play().catch(e => console.log("Автовоспроизведение заблокировано браузером", e));
-
-          // Запускаем смену картинок каждые 2.5 секунды
-          intervalId = setInterval(() => {
-            currentIndex = (currentIndex + 1) % images.length;
-            el.setAttribute('src', images[currentIndex]);
-          }, 2500);
+          if (videoAllowed) {
+            video.play();
+          }
         });
 
-        // Событие: маркер потерян из вида
+        // Когда камера теряет фото-маркер из вида
         el.addEventListener("targetLost", () => {
-          // Ставим музыку на паузу и останавливаем таймер
-          audio.pause();
-          clearInterval(intervalId);
+          video.pause();
         });
       }
     });
@@ -47,36 +66,29 @@
 </head>
 <body style="margin: 0; overflow: hidden;">
 
+  <button id="start-btn" onclick="startExperience()">Нажмите, чтобы начать</button>
+
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
-    renderer="colorManagement: true, physicallyCorrectLights" 
+    renderer="colorManagement: true, physicallyCorrectLights: false" 
     vr-mode-ui="enabled: false" 
     device-orientation-permission-ui="enabled: false">
     
     <a-assets>
-      <!-- Ваши картинки -->
-      <img id="img1" src="photo1.jpeg">
-      <img id="img2" src="photo2.jpeg">
-      <img id="img3" src="photo3.jpeg">
-
-      <!-- Ваша аудиозапись -->
-      <audio id="bg-music" src="music.mp3" preload="auto"></audio>
+      <video id="ar-video" src="video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Привязка к маркеру targetIndex: 0 -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      <!-- Плоскость, на которой листаются картинки -->
-      <a-plane 
-        src="#img1" 
-        position="0 0 0" 
+    <a-entity mindar-image-target="targetIndex: 0" ar-video-handler>
+      <a-video 
+        src="#ar-video" 
+        position="0 0 0.01" 
+        width="1.77" 
         height="1" 
-        width="1" 
-        rotation="0 0 0" 
-        ar-slideshow>
-      </a-plane>
+        rotation="0 0 0">
+      </a-video>
     </a-entity>
   </a-scene>
 
