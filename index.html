@@ -2,78 +2,141 @@
 <html lang="ru">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Video Experience</title>
+  <title>AR Experience</title>
   <!-- A-Frame и MindAR -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* Кнопка первого клика (старт) */
+    /* Фоновый декор и общий стиль */
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background-color: #000000;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Верхняя панель с подсказкой */
+    #ui-header {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(18, 18, 20, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 40px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    /* Пульсирующая точка индикатора */
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background-color: #34c759;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34c759;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Стартовая кнопка в стиле Vision Pro / Glassmorphism */
     #start-btn {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 99999;
-      padding: 16px 32px;
-      font-size: 18px;
-      font-weight: bold;
+      padding: 18px 36px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
       color: #ffffff;
-      background: #007bff;
-      border: none;
-      border-radius: 30px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 40px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* Кнопка перехода на внешний сайт (Glassmorphism) */
+    #start-btn:active {
+      transform: translate(-50%, -50%) scale(0.94);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Кнопка перехода на внешний сайт */
     #link-btn {
-      display: none; /* Скрываем до нажатия кнопки "Начать" */
+      display: none;
       position: absolute;
-      bottom: 35px;
+      bottom: 36px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 99999;
       
-      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       
-      padding: 14px 28px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 15px 30px;
       font-size: 15px;
       font-weight: 600;
       letter-spacing: 0.3px;
       color: #ffffff;
       text-decoration: none;
       white-space: nowrap;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
 
-      background: rgba(20, 20, 20, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(18, 18, 20, 0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 50px;
       
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
       -webkit-tap-highlight-color: transparent;
     }
 
     #link-btn:active {
       transform: translateX(-50%) scale(0.95);
-      background: rgba(20, 20, 20, 0.85);
-      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(18, 18, 20, 0.75);
+      border-color: rgba(255, 255, 255, 0.35);
     }
 
     #link-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
     }
   </style>
 
@@ -84,21 +147,22 @@
         const video = document.querySelector('#ar-video');
         const startBtn = document.getElementById('start-btn');
         const linkBtn = document.getElementById('link-btn');
+        const uiHeader = document.getElementById('ui-header');
 
-        // Клик по кнопке "Начать" снимает защиту от автовоспроизведения
         startBtn.addEventListener('click', () => {
           video.play().then(() => {
             video.pause();
             startBtn.style.display = 'none';
             linkBtn.style.display = 'inline-flex';
+            uiHeader.style.opacity = '1';
           }).catch(err => {
             console.error("Ошибка при разблокировке медиа:", err);
             startBtn.style.display = 'none';
             linkBtn.style.display = 'inline-flex';
+            uiHeader.style.opacity = '1';
           });
         });
 
-        // Событие: маркер найден в камере
         el.addEventListener("targetFound", () => {
           video.muted = false;
           const playPromise = video.play();
@@ -107,7 +171,6 @@
           }
         });
 
-        // Событие: маркер потерян из вида
         el.addEventListener("targetLost", () => {
           video.pause();
         });
@@ -116,6 +179,12 @@
   </script>
 </head>
 <body style="margin: 0; overflow: hidden;">
+
+  <!-- Верхний информационный бар -->
+  <div id="ui-header">
+    <div class="status-dot"></div>
+    <span>Наведите камеру на фото</span>
+  </div>
 
   <!-- Стартовая кнопка -->
   <button id="start-btn">Нажмите, чтобы начать</button>
