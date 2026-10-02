@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title></title>
+  <title>AR Video</title>
 
   <!-- A-Frame и MindAR -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -34,9 +34,7 @@
       font-size: 18px;
       font-weight: bold;
       color: #ffffff;
-      
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-
       background: rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -61,8 +59,175 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 99999;
-      
       display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #ffffff;
+      text-decoration: none;
+      white-space: nowrap;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #link-btn:active {
+      transform: translateX(-50%) scale(0.95);
+      background: rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #link-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+    }
+  </style>
+
+  <script>
+    // 1. КОМПОНЕНТ СГЛАЖИВАНИЯ ДВИЖЕНИЯ (LERP)
+    AFRAME.registerComponent('smooth-follow', {
+      schema: {
+        target: { type: 'selector' },
+        factor: { type: 'number', default: 0.15 } // 0.1 - максимально плавно, 0.3 - быстрее
+      },
+      init: function () {
+        this.targetObj = this.data.target.object3D;
+        this.selfObj = this.el.object3D;
+
+        this.targetPos = new THREE.Vector3();
+        this.targetQuat = new THREE.Quaternion();
+        this.targetScale = new THREE.Vector3();
+      },
+      tick: function () {
+        if (!this.data.target || !this.targetObj) return;
+
+        // Обновляем позиции только когда объект видим на экране
+        if (this.el.getAttribute('visible')) {
+          this.targetObj.getWorldPosition(this.targetPos);
+          this.targetObj.getWorldQuaternion(this.targetQuat);
+          this.targetObj.getWorldScale(this.targetScale);
+
+          // Линейная интерполяция позиции, вращения и масштаба
+          this.selfObj.position.lerp(this.targetPos, this.data.factor);
+          this.selfObj.quaternion.slerp(this.targetQuat, this.data.factor);
+          this.selfObj.scale.lerp(this.targetScale, this.data.factor);
+        }
+      }
+    });
+
+    // 2. ОБРАБОТЧИК СОБЫТИЙ ТРЕКИНГА И ВОСПРОИЗВЕДЕНИЯ (С ЗАДЕРЖКОЙ)
+    AFRAME.registerComponent('ar-video-handler', {
+      init: function () {
+        const el = this.el;
+        const video = document.querySelector('#ar-video');
+        const startBtn = document.getElementById('start-btn');
+        const linkBtn = document.getElementById('link-btn');
+        const smoothedContainer = document.querySelector('#smoothed-container');
+
+        let isTargetFound = false;
+        let lostTimeout = null;
+        const LOST_DELAY_MS = 450; // Задержка скрытия (мс) при утере кадра
+
+        startBtn.addEventListener('click', () => {
+          video.play().then(() => {
+            video.pause();
+            startBtn.style.display = 'none';
+            linkBtn.style.display = 'inline-flex';
+          }).catch(err => {
+В вашем коде есть две критические ошибки, которые ломают логику отображения элементов и воспроизведения звука на мобильных устройствах (особенно iOS Safari):
+
+### Основные проблемы и их исправление:
+
+1. **Конфликт `display` в CSS для `#link-btn`**:
+   В стилях `#link-btn` одновременно указаны `display: none;` и далее по коду `display: inline-flex;`. Второе свойство перекрывает первое, из-за чего кнопка ссылки отображается сразу при загрузке страницы, а не после клика на «Start».
+2. **Блокировка звука на iOS (Autoplay Policy)**:
+   Разблокировка звука `video.muted = false` внутри события `targetFound` блокируется мобильными браузерами, так как `targetFound` вызывается асинхронно трекером, а не прямым жестом пользователя (User Gesture). Включение звука нужно делать непосредственно в момент клика по кнопке `#start-btn`.
+
+---
+
+### Исправленный и оптимизированный HTML-код:
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Experience</title>
+
+  <!-- A-Frame и MindAR -->
+  <script src="[https://aframe.io/releases/1.4.2/aframe.min.js](https://aframe.io/releases/1.4.2/aframe.min.js)"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js](https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js)"></script>
+
+  <style>
+    /* Стили заставки MindAR */
+    .mindar-ui-overlay,
+    .mindar-ui-loading {
+      background: rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+    }
+
+    .mindar-ui-loading .loader {
+      border: 3px solid rgba(255, 255, 255, 0.2) !important;
+      border-top-color: #ffffff !important;
+    }
+
+    /* Кнопка старта */
+    #start-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 99999;
+      padding: 16px 32px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-btn:active {
+      transform: translate(-50%, -50%) scale(0.95);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Кнопка перехода на квиз */
+    #link-btn {
+      display: none; /* Скрыта по умолчанию */
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      
       align-items: center;
       justify-content: center;
       gap: 10px;
@@ -77,13 +242,11 @@
       white-space: nowrap;
 
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-
       background: rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 50px;
-      
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       -webkit-tap-highlight-color: transparent;
@@ -116,23 +279,23 @@
         const linkBtn = document.getElementById('link-btn');
 
         startBtn.addEventListener('click', () => {
+          // Снимаем Mute во время жеста пользователя, чтобы разблокировать звук
+          video.muted = false;
+
           video.play().then(() => {
             video.pause();
             startBtn.style.display = 'none';
             linkBtn.style.display = 'inline-flex';
           }).catch(err => {
-            console.error("Ошибка при разблокировке медиа:", err);
+            console.error("Ошибка активации медиа:", err);
             startBtn.style.display = 'none';
             linkBtn.style.display = 'inline-flex';
           });
         });
 
         el.addEventListener("targetFound", () => {
-          video.muted = false;
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(error => console.log("Play error:", error));
-          }
+          // Видео уже разблокировано кликом, просто запускаем воспроизведение
+          video.play().catch(error => console.log("Play error:", error));
         });
 
         el.addEventListener("targetLost", () => {
@@ -148,15 +311,15 @@
   <button id="start-btn">Нажмите, чтобы начать</button>
 
   <!-- Кнопка перехода на сайт -->
-  <a id="link-btn" href="https://google.com" target="_blank">
-    <span>Перейти на сайт</span>
+  <a id="link-btn" href="[https://ilyararzuyev.github.io/Monke1year](https://ilyararzuyev.github.io/Monke1year)" target="_blank">
+    <span>Перейти на квиз</span>
     <svg viewBox="0 0 24 24">
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
       <polyline points="15 3 21 3 21 9"></polyline>
       <line x1="10" y1="14" x2="21" y2="3"></line>
     </svg>
-  </a>
-  
+  </a>  
+
   <a-scene 
     mindar-image="imageTargetSrc: ./targets.mind;" 
     color-space="sRGB" 
@@ -172,8 +335,7 @@
         loop="true" 
         crossorigin="anonymous" 
         playsinline 
-        webkit-playsinline
-        muted>
+        webkit-playsinline>
       </video>
     </a-assets>
 
